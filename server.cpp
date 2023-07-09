@@ -81,8 +81,7 @@ void removeNewline(std::string& str) {
 
 
 
-void Server::handleNewConnection(struct pollfd* fds, int& fds_num) 
-                                {
+void Server::handleNewConnection(std::map<int, std::string>& clientMap, struct pollfd* fds, int& fds_num) {
     int socket;
     size_t i = sizeof(serverAddress);
     
@@ -91,7 +90,7 @@ void Server::handleNewConnection(struct pollfd* fds, int& fds_num)
         close(this->socket_fd);
         return;
     }
-
+    
     if (fds_num == MAX_CLIENTS) {
         std::cout << "Maximum number of clients reached" << std::endl;
         close(socket);
@@ -99,8 +98,49 @@ void Server::handleNewConnection(struct pollfd* fds, int& fds_num)
         fds[fds_num].fd = socket;
         fds[fds_num].events = POLLIN;
         fds_num++;
+        
         std::cout << "Client connected" << std::endl;
+        
+        // Perform authentication for the new connection
+        if (performAuthentication(clientMap, fds, fds_num - 1)) {
+            std::cout << "Client authenticated" << std::endl;
+        } else {
+            std::cout << "Authentication failed. Closing connection." << std::endl;
+            close(socket);
+            fds_num--;
+        }
     }
+}
+
+bool Server::performAuthentication(std::map<int, std::string>& clientMap, struct pollfd* fds, int clientIndex) {
+    char buffer[1024];
+    memset(buffer, 0, 1024);
+    int bytes = recv(fds[clientIndex].fd, buffer, 1024, 0);
+    
+    if (bytes <= 0) {
+        std::cout << "Failed to receive client authentication data" << std::endl;
+        return false;
+    }
+    
+    std::string clientInfo(buffer);
+    
+    if (clientInfo.find("PASS ") == 0) {
+        std::string pass = clientInfo.substr(5);
+        removeNewline(pass);
+        
+        if (pass != password) {
+            std::cout << "Incorrect password. Closing connection." << std::endl;
+            return false;
+        }
+        
+        // Add client to the map with an empty username and nickname
+        clientMap[fds[clientIndex].fd] = "";
+    } else {
+        std::cout << "Invalid password format. Closing connection." << std::endl;
+        return false;
+    }
+    
+    return true;
 }
 
 void Server::handleClientMessage(std::map<int, std::string>& clientMap, std::vector<std::string>& Channels,
@@ -138,22 +178,36 @@ void Server::handleClientDisconnection(std::map<int, std::string>& clientMap, st
 void Server::handleClientData(std::map<int, std::string>& clientMap, std::vector<std::string>& Channels,
                               struct pollfd* fds, int clientIndex, const char* buffer) {
     if (clientMap.find(fds[clientIndex].fd) == clientMap.end()) {
-        handleNewClient(clientMap, fds, clientIndex, buffer);
-    } else {
-        handleExistingClient(Channels, buffer);
+        handleNewConnection(clientMap, fds, clientIndex);
+    } 
+    else 
+    {
+        std::string clientInfo(buffer);
+        std::string channel;
+        size_t pos;
+
+        pos = clientInfo.find("JOIN #");
+        if (pos != std::string::npos) {
+            pos += 6; // Length of "JOIN #"
+            size_t endPos = clientInfo.find(" ", pos);
+            if (endPos != std::string::npos) {
+                channel = clientInfo.substr(pos, endPos - pos);
+
+                // Create a new Channel object
+                Channel newChannel(channel);
+                channels.push_back(newChannel);
+
+                std::cout << "Channel created: " << channel << std::endl;
+            }
+        } 
+        else 
+        {
+            handleExistingClient(Channels, buffer);
+        }
     }
 }
 
-void Server::handleNewClient(std::map<int, std::string>& clientMap, struct pollfd* fds, int clientIndex, const char* buffer) {
-    std::string clientInfo(buffer);
-    
-    if (strncmp(buffer, "PASS ", 5) == 0) {
-        handleNewClientPassword(clientMap, fds, clientIndex, clientInfo);
-    } else {
-        std::cout << "Invalid password format. Closing connection." << std::endl;
-        close(fds[clientIndex].fd);
-    }
-}
+
 
 void Server::handleNewClientPassword(std::map<int, std::string>& clientMap, struct pollfd* fds, int clientIndex,
                                      const std::string& clientInfo) {
@@ -224,6 +278,36 @@ void Server::handleClientInformation(const std::string& clientInfo)
             pos = endPos + 1;
         }
     }
+
+    pos = clientInfo.find("PASSWORD ", pos);
+    if (pos != std::string::npos) {
+        pos += 9; // Length of "PASSWORD "
+        size_t endPos = clientInfo.find(" ", pos);
+        if (endPos != std::string::npos) {
+            password = clientInfo.substr(pos, endPos - pos);
+        } else {
+            password = clientInfo.substr(pos); // Password extends until the end of the string
+        }
+    }
+    size_t newlinePos = password.find("\n");
+    if (newlinePos != std::string::npos) {
+        password.erase(newlinePos);
+    }
+
+    // Verify client information and password
+    if (username.empty() || nickname.empty() || password.empty()) {
+        std::cout << "Invalid client information. Closing connection." << std::endl;
+        
+        // Close the connection or take appropriate action
+        return;
+    }
+
+    if (strcmp(password.c_str(), this->password.c_str())) {
+        std::cout << "Incorrect password. Closing connection." << std::endl;
+        // std::cout << password << std::endl;
+        // Close the connection or take appropriate action
+        return;
+    }
 }
 
 void Server::accept_socket(void) {
@@ -252,7 +336,7 @@ void Server::accept_socket(void) {
             {
                 if (fds[j].fd == this->socket_fd) 
                 {
-                    handleNewConnection(fds, fds_num);
+                    handleNewConnection(clientMap, fds, fds_num);
                 } 
                 else 
                 {

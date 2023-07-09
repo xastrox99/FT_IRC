@@ -40,19 +40,19 @@ class Server
     int get_port();
     int get_socket_fd();
     std::string get_password();
-    void handleNewConnection(struct pollfd* fds, int& fds_num);
+    void handleNewConnection(std::map<int, std::string>& clientMap, struct pollfd* fds, int& fds_num);
     void handleClientMessage(std::map<int, std::string>& clientMap, std::vector<std::string>& Channels,
                                  struct pollfd* fds, int& fds_num, int clientIndex);
     void handleClientDisconnection(std::map<int, std::string>& clientMap, struct pollfd* fds, int& fds_num, int clientIndex);
     void handleClientData(std::map<int, std::string>& clientMap, std::vector<std::string>& Channels,
                               struct pollfd* fds, int clientIndex, const char* buffer);
-    void handleNewClient(std::map<int, std::string>& clientMap, struct pollfd* fds, int clientIndex, const char* buffer);
+    // void handleNewClient(std::map<int, std::string>& clientMap, struct pollfd* fds, int clientIndex, const char* buffer);
     void handleNewClientPassword(std::map<int, std::string>& clientMap, struct pollfd* fds, int clientIndex,
                                      const std::string& clientInfo);
     void handleExistingClient(std::vector<std::string>& Channels, const char* buffer);
     void handleChannelCreation(const std::string& clientInfo, std::vector<std::string>& Channels, std::string& channel, size_t pos);
     void handleClientInformation(const std::string& clientInfo) ;
-    
+    bool performAuthentication(std::map<int, std::string>& clientMap, struct pollfd* fds, int clientIndex);
 
 
 

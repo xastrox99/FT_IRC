@@ -17,19 +17,14 @@
 class channel
 {
 private:
-    std::map<std::string ,  >
+    std::string name;
+    std::string password;
 public:
     channel();
     ~channel();
 };
 
-channel::channel()
-{
-}
 
-channel::~channel()
-{
-}
 
 
 #endif
