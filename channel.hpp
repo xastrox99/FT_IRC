@@ -6,25 +6,17 @@
 #include <cstring>
 #include <cstdlib>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <poll.h>
-#include <sys/poll.h>
-#include <string.h>
-#include <map>
 
 class channel
 {
-private:
-    std::string name;
-    std::string password;
-public:
+    public:
     channel();
     ~channel();
+
+    private:
+    std::string name;
+    std::vector<std::string> users;
+    
 };
-
-
-
 
 #endif

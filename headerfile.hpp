@@ -14,8 +14,6 @@
 #include <string.h>
 #include <map>
 #include <cctype>
-#include <sstream>
-
 
 #include "Message.hpp"
 #include "client.hpp"
@@ -56,9 +54,6 @@ class Server
     std::string get_password();
     void handel_message(char *buffer, Message *user);
     int existe(int fd);
-
-    std::string privmsg(std::string buff, Client &client);
-
 };
 
 

@@ -37,7 +37,7 @@ class Client
     Client(int socket_client);
     int get_socket_client();
     std::string get_username();
-    std::string get_nickname();
+    std::string get_nickname() const;
     std::string get_realname();
     bool get_isRegistred();
     bool get_user();
@@ -48,6 +48,7 @@ class Client
     void set_user(std::string user, bool user_stat);
     void set_nick(std::string nick, bool nick_stat);
     void set_pass(bool pass_stat);
+    bool check_command(std::string Command);
 
 };
 
@@ -56,5 +57,6 @@ std::ostream& operator<<(std::ostream& os, Client& client);
 #include "Message.hpp"
 
 #endif
+
 
 

@@ -50,6 +50,7 @@ class Message
     void set_params(std::vector<std::string> params);
     void set_trailing(std::string trailing);
     std::string parss_password(std::string password, std::string message, std::vector<Client> &clients);
+    bool isNicknameTaken(const std::vector<Client>& clients, const std::string& nickname);
     // void print_message();
     // void print_params();
     // void print_prefix();

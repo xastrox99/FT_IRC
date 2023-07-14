@@ -32,7 +32,7 @@ std::string Client::get_username()
     return (this->username);
 }
 
-std::string Client::get_nickname()
+std::string Client::get_nickname() const
 {
     return (this->nickname);
 }
@@ -108,4 +108,11 @@ std::ostream& operator<<(std::ostream& os, Client& client)
     os << std::endl;
 
     return os;
+}
+bool Client::check_command(std::string Command)
+{
+   if (Command != "PASS" && Command != "NICK"  \
+    && Command != "USER" && Command != "PRIVMSG" && Command != "NOTICE" && Command != "JOIN")
+        return false;
+    return true;
 }

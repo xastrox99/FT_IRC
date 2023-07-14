@@ -67,11 +67,28 @@ static std::vector<std::string> ft_split(const std::string& str, char delimiter)
     return tokens;
 }
 
+bool Message::isNicknameTaken(const std::vector<Client>& clients, const std::string& nickname) 
+{
+    for (std::vector<Client>::const_iterator it = clients.begin(); it != clients.end(); ++it) 
+    {
+        if (it->get_nickname() == nickname) 
+            return true;  // Nickname already exists
+    }
+    return false;  // Nickname is available
+}
+
+
 std::string Message::parss_password(std::string password, std::string buffer, std::vector<Client> &clients)
 {
     message = buffer;
     if(!is_authenticated)
     {
+        std::string sen = "enter password";
+        int bit = send(this->socket, sen.c_str(), sen.length(), 0);
+        if(bit == -1)
+        {
+            std::cout<<"error in send"<<std::endl;
+        }
         if(message.substr(0, 4) == "PASS")
         {
             if(client.get_pass())
@@ -101,10 +118,9 @@ std::string Message::parss_password(std::string password, std::string buffer, st
                 return (":localhost 461 * USER :Not enough parameters\r\n");
             else if ((split[2].size() == 1 && split[2][0] == '0') && (split[3].size() == 1 && split[3][0] == '*') && split[4][0] == ':')
             {
-                // params.push_back(message.substr(0, pos));
+                // params.push_back(message.substr(0, pos))
                 client.set_user(split[1], true);
                 client.set_real_name(split[4].substr(1));
-                std::cout<<client<<std::endl;
                 clients.push_back(client);
                 return ("");
             }
@@ -114,6 +130,23 @@ std::string Message::parss_password(std::string password, std::string buffer, st
             std::vector<std::string> split;
             split = ft_split(message, ' ');
 
+            if (split.size() < 2)
+                return (":localhost 431 * :No nickname given\r\n");
+            else if (this->isNicknameTaken(clients, split[1]))
+                return (":localhost 433 * :Nickname is already in use\r\n");
+            else if ((split[1].size() > 50 || split[1].find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789[]{}\\|") != std::string::npos))
+                return (":localhost 432 * :Erroneous nickname\r\n");
+            else
+            {
+                std::string oldNickname = client.get_nickname();
+                client.set_nick(split[1], true);
+    
+                // Broadcast the nickname change to other clients
+                
+                // ... send the nicknameChangeMessage to other clients ...
+    
+                return (":" + oldNickname + " NICK " + split[1] + "\r\n");
+            }
         }
         else
         {
@@ -123,107 +156,34 @@ std::string Message::parss_password(std::string password, std::string buffer, st
     }
     
     return (":localhost 462 " /*+ client.get_nick()*/   " PASS :You may not reregister\r\n");
-
-    // size_t pos = message.find(' ');
-    // command = message.substr(0, pos);
-    // message = message.substr(pos + 1);
-    // std::cout << "command: " << command << std::endl;
-    // std::cout << "message: " << message << std::endl;
-    // if(pos == std::string::npos)
-    // {
-    //     if(command.find("PASS") != std::string::npos || command.find("USER") != std::string::npos)
-    //     {
-    //         std::cout << "Not enough arguments" << std::endl;
-    //         return (-1);
-    //     }
-    //     else if(command.find("NICK") != std::string:: npos)
-    //     {
-    //         std::cout << "Error: No nickname given" << std::endl;
-    //         return (-1);
-    //     }
-    //     else
-    //     {
-    //         std::cout << "Error: No command given" << std::endl;
-    //         return (-1);
-    //     }
-    // }
-    // // check_command(message, command, password, params.size());
-}
-
-// void Message::check_command(std::string message, std::string command, std::string password, int size)
+// std::string Message::parss_password(std::string password, std::string buffer)
 // {
-//     std::string tmp;
-//     size_t newline = message.find('\n');
-//     if(newline != std::string::npos)
+//     message = buffer;
+//     if(this->message[0] == ':')
 //     {
-//         tmp = message.substr(0, newline - 1);
-//         if(tmp.empty())
-//         {
-//             std::cout << "Error : Empty message" << std::endl;
-//             return;
-//         }
-//         else 
-//             tmp = message;
-//         if(size == 0)
-//         {
-//             if(command != "PASS")
-//             {
-//                 std::cout << "Error: Invalid format" << std::endl;
-//                 return;
-//             }
-//             if(tmp != password)
-//             {
-//                 std::cout << "Error: Wrong password" << std::endl;
-//                 return;
-//             }
-//             else
-//             {
-//                 std::cout << "Authenticated successfuly" << std::endl;
-//                 password = tmp;
-//             }
-//         }
-//         else 
-//         {
-//             if(command == "PASS" && tmp != password)
-//             {
-//                 std::cout << "Error: Wrong password" << std::endl;
-//                 return;
-//             }
-//             else 
-//             {
-//                 std::cout << "Authenticated successfuly" << std::endl;
-//                 password = tmp;
-//             }
-//         }
-        
+//         int pos = this->message.find(" ");
+//         this->prefix = this->message.substr(1, pos - 1);
+//         this->message = this->message.substr(pos + 1);
 //     }
-// }
+//     int pos = this->message.find(" ");
+//     this->command = this->message.substr(0, pos);
+//     this->message = this->message.substr(pos + 1);
+//     if(pos == std::string::npos)
+//     {
+//         if(this->command == "PASS")
+//         {
+            
+//         }
+//         else if(this->command == "NICK")
+//         {
+         
+//         }
+//         else if(this->command == "USER")
+//         {
+         
+//         }
+//     }
 
-void Message::handleError(int error)
-{
-    if(error == 462)
-    {
-        std::cout << "Error: Already registered" << std::endl;
-        return;
-    }
-    else if(error == 464)
-    {
-        std::cout << "Error: Wrong password" << std::endl;
-        close(socket);
-        return;
-    }
-    else if(error == -1)
-    {
-        std::cout << "Error: Not authenticated" << std::endl;
-        return;
-    }
-    else if (error == 461)
-    {
-        std::cout << "Error: Not enough arguments" << std::endl;
-        return;
-    }
-    // else if (error == 0)
-    // {
-    //    // add client to list
-    // }
+//     return (":localhost 462 " /*+ client.get_nick()*/   " PASS :You may not reregister\r\n");
+
 }
