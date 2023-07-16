@@ -147,6 +147,7 @@ void Server::accept_socket(void) {
                     char buffer[1024];
                     memset(buffer, 0, 1024);
                     int bytes = recv(fds[j].fd, buffer, 1024, 0);
+                    std::cout <<  "limechat auth: " << buffer << std::endl;
                     if (bytes < 0) {
                         // Client disconnected
                         std::cout << "Client disconnected" << std::endl;
@@ -164,7 +165,7 @@ void Server::accept_socket(void) {
                         std::cout << "Client disconnected" << std::endl;
                     }
                     
-                    if (!existe(fds[j].fd))
+                    else if (!existe(fds[j].fd))
                     {
                         handel_message(buffer, &clientMap[flag]);
                     }
@@ -180,8 +181,16 @@ void Server::handel_message(char *buff, Message *user)
     std::string response = "";
 
     response = user->parss_password(password, buff, this->clients);
-    // for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
-    //     std::cout << *it << std::endl;
+    std::cout<<"response:"<<response<<std::endl;
+    // std::string sen = "enter password";
+    
+    // for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) 
+    // {
+    //     int bit = send(it->get_socket_client(), response.c_str(), response.length(), 0);
+    //     if(bit == -1)
+    //     {
+    //         std::cout<<"error in send"<<std::endl;
+    //     }
     // }
 
 }

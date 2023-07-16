@@ -59,6 +59,8 @@ class Message
     // void print_all();
     void check_command(std::string message, std::string command, std::string password, int size);
     void handleError(int error);
+    
 };
 
+void    erase_charcter(std::string& str, char c);
 #endif
