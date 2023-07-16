@@ -94,6 +94,19 @@ int Server::existe(int fd)
     std::cout << "not existe" << std::endl;
     return (0);
 }
+static std::vector<std::string> ft_split(const std::string& str, char delimiter)
+{
+    std::vector<std::string> tokens;
+    std::stringstream ss(str);
+    std::string token;
+
+    while (std::getline(ss, token, delimiter))
+    {
+        tokens.push_back(token);
+    }
+
+    return tokens;
+}
 
 
 void Server::accept_socket(void) {
@@ -147,7 +160,7 @@ void Server::accept_socket(void) {
                     char buffer[1024];
                     memset(buffer, 0, 1024);
                     int bytes = recv(fds[j].fd, buffer, 1024, 0);
-                    std::cout <<  "limechat auth: " << buffer << std::endl;
+ 
                     if (bytes < 0) {
                         // Client disconnected
                         std::cout << "Client disconnected" << std::endl;
@@ -178,19 +191,21 @@ void Server::accept_socket(void) {
 
 void Server::handel_message(char *buff, Message *user)
 {
+    std::string buffer(buff);
     std::string response = "";
+    std::vector<std::string> input;
 
-    response = user->parss_password(password, buff, this->clients);
-    std::cout<<"response:"<<response<<std::endl;
-    // std::string sen = "enter password";
+    erase_charcter(buffer, '\n');
+    erase_charcter(buffer, '\r');
+    input = ft_split(buffer, ' ');
+    response = user->parss_password(password, buffer, this->clients);
     
-    // for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); ++it) 
-    // {
-    //     int bit = send(it->get_socket_client(), response.c_str(), response.length(), 0);
-    //     if(bit == -1)
-    //     {
-    //         std::cout<<"error in send"<<std::endl;
-    //     }
-    // }
+    if(input[0] == "JOIN")
+        std::cout<<"ehehehehe:"<<response<<std::endl;
+    int bit = send(this->client_fd, response.c_str(), response.length(), 0);
+    if(bit == -1)
+    {
+        std::cout<<"error in send"<<std::endl;
+    }
 
 }

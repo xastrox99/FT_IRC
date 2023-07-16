@@ -91,13 +91,12 @@ void    erase_charcter(std::string& str, char c)
 std::string Message::parss_password(std::string password, std::string buffer, std::vector<Client> &clients)
 {
     std::vector<std::string> split;
+
     split = ft_split(buffer, ' ');
     if(!is_authenticated)
     {
-        
         if(split[0] == "PASS")
         {
-            erase_charcter(split[1], '\n');
             if(client.get_pass())
                 return (":localhost 462 " + client.get_nickname() + " USER :You may not reregister\r\n");
             else if(split[1].empty())
@@ -110,7 +109,9 @@ std::string Message::parss_password(std::string password, std::string buffer, st
                 return (":localhost 001 * :Welcome to the Internet Relay Network\r\n");
             }
             else
+            {
                 return (":localhost 464 * PASS :Password incorrect\r\n");
+            }
         }
         else if (split[0] == "USER" && client.get_pass())
         {
@@ -120,18 +121,15 @@ std::string Message::parss_password(std::string password, std::string buffer, st
                 return (":localhost 461 * USER :Not enough parameters\r\n");
             else if ((split[2].size() == 1 && split[2][0] == '0') && (split[3].size() == 1 && split[3][0] == '*') )
             {
-                erase_charcter(split[4], '\n');
                 erase_charcter(split[4], ':');
                 client.set_user(split[1], true);
                 client.set_real_name(split[4]);
-                clients.push_back(client);
-                std::cout<<client<<std::endl;
+                // std::cout<<client<<std::endl;
                 return ("");
             }
         }
         else if(split[0] == "NICK" && client.get_pass())
         {
-            erase_charcter(split[1], '\n');
             if (split.size() < 2)
                 return (":localhost 431 * :No nickname given\r\n");
             else if (this->isNicknameTaken(clients, split[1]))
@@ -154,40 +152,13 @@ std::string Message::parss_password(std::string password, std::string buffer, st
         }
         else
         {
-            return ("Not authenticated");
+            return ("not valid command \r\n");
         }
-
+        if (client.get_pass() && client.get_nick() && client.get_user())
+        {
+            client.set_isRegistred();
+            clients.push_back(client);
+        }
     }
-    
-    return (":localhost 462 " /*+ client.get_nick()*/   " PASS :You may not reregister\r\n");
-// std::string Message::parss_password(std::string password, std::string buffer)
-// {
-//     message = buffer;
-//     if(this->message[0] == ':')
-//     {
-//         int pos = this->message.find(" ");
-//         this->prefix = this->message.substr(1, pos - 1);
-//         this->message = this->message.substr(pos + 1);
-//     }
-//     int pos = this->message.find(" ");
-//     this->command = this->message.substr(0, pos);
-//     this->message = this->message.substr(pos + 1);
-//     if(pos == std::string::npos)
-//     {
-//         if(this->command == "PASS")
-//         {
-            
-//         }
-//         else if(this->command == "NICK")
-//         {
-         
-//         }
-//         else if(this->command == "USER")
-//         {
-         
-//         }
-//     }
-
-//     return (":localhost 462 " /*+ client.get_nick()*/   " PASS :You may not reregister\r\n");
-
+    return ("Not authenticated\r\n");
 }
