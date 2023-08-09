@@ -1,27 +1,33 @@
 NAME = ircserv
 
-SRC = parssing.cpp server.cpp Message.cpp client.cpp
+SRCS = parssing.cpp server.cpp Message.cpp client.cpp channel.cpp mode.cpp joinChannel.cpp privmsg.cpp TOPIC.cpp invite.cpp kick.cpp bot.cpp
+SRC_PATHS = $(addprefix SRCS/,$(SRCS))
 
-HEADER = headerfile.hpp Message.hpp client.hpp
+HEADERS = headerfile.hpp Message.hpp client.hpp channel.hpp
+HEADER_PATHS = $(addprefix INC/,$(HEADERS))
 
-OBJ = $(SRC:.cpp=.o)
+OBJS = $(addprefix OBJS/,$(SRCS:.cpp=.o))
 
-CXX = c++
+CXX = g++
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -fsanitize=address
+$(NAME): $(OBJS)
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
-$(NAME): $(OBJ)
-	$(CXX) $(OBJ) $(CXXFLAGS) -o $(NAME)
-
-%.o: %.cpp $(HEADER)
+OBJS/%.o: SRCS/%.cpp $(HEADER_PATHS) | OBJS
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+OBJS:
+	mkdir -p OBJS
 
 all: $(NAME)
 
 clean:
-	rm -f $(OBJ)
+	rm -rf OBJS
 
 fclean: clean
 	rm -f $(NAME)
 
 re: fclean all
+
+.PHONY: all clean fclean re
